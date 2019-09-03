@@ -9,7 +9,6 @@ W/dalvikvm( 12513): DexOpt: --- END 'apk.classes2.zip' --- status=0x000e, proces
 E/dalvikvm( 12513): Unable to extract+optimize DEX from '/data/.../apk.classes2.zip'
 ```
 After dexopt failure, you app will crash with dramatic exception: ``` java.lang.ClassNotFoundException``` or ```java.lang.NoClassDefFoundError```. You can get more from [this link](https://github.com/Tencent/tinker/issues/925#issuecomment-483927335).  
-
 <br></br>  
 In this library, we register process fork handler, clear the alarm clock and reset signal handler in the ```childHandler```.
 ```
