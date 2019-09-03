@@ -32,7 +32,7 @@ We can find that, new sub process in error device had been replaced with a diffe
 Add library dependency to dependencies{} block in build.gradle file  
 ```
     dependencies{
-       compile 'com.cantalou:dexoptfix:1.0.1'
+       compile 'com.cantalou:dexoptfix:1.0.2'
     }
 ```  
 
