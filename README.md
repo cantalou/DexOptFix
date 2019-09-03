@@ -29,20 +29,31 @@ Error device`s log
 We can find that, new sub process in error device had been replaced with a different signal handler and a 2s alarm clock by the virus.
 
 # How to use
+Add custom repository
+```
+    repositories {
+        ...
+        maven{
+            url "https://dl.bintray.com/cantalou/maven/"
+        }
+    }
+```
+
+
 Add library dependency to dependencies{} block in build.gradle file  
 ```
-dependencies{
-   compile 'com.cantalou:dexoptfix:1.0.1'
-}
+    dependencies{
+       compile 'com.cantalou:dexoptfix:1.0.1'
+    }
 ```  
 
 Add this code in the method ```attachBaseContext``` of Application before calling dex operation(e.g., MultiDex.install).
 ```
-override fun attachBaseContext(base: Context?) {
-   super.attachBaseContext(base)
-   DexOptFix.fix(this)
-   MultiDex.install(this)
-}
+    override fun attachBaseContext(base: Context?) {
+       super.attachBaseContext(base)
+       DexOptFix.fix(this)
+       MultiDex.install(this)
+    }
 ```  
 
 # Test cover

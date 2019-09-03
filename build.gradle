@@ -11,7 +11,7 @@ buildscript {
         
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.1'
+        classpath 'com.android.tools.build:gradle:3.2.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.0'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
@@ -25,7 +25,9 @@ allprojects {
         }
         google()
         jcenter()
-        
+        maven{
+            url "https://dl.bintray.com/cantalou/maven/"
+        }
     }
 }
 
