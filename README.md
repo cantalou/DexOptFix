@@ -29,17 +29,6 @@ Error device`s log
 We can find that, new sub process in error device had been replaced with a different signal handler and a 2s alarm clock by the virus.
 
 # How to use
-Add custom repository
-```
-    repositories {
-        ...
-        maven{
-            url "https://dl.bintray.com/cantalou/maven/"
-        }
-    }
-```
-
-
 Add library dependency to dependencies{} block in build.gradle file  
 ```
     dependencies{
@@ -55,6 +44,11 @@ Add this code in the method ```attachBaseContext``` of Application before callin
        MultiDex.install(this)
     }
 ```  
+
+Alternative you can use [SoFix](https://github.com/cantalou/SoFix) to resolve so linker error.
+```
+SoFix.loadLibrary(context, "dexoptfix");
+```
 
 # Test cover
 Android version : from 4.0 - 4.4
