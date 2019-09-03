@@ -24,7 +24,7 @@ void parentHandler(void) {
 
 void childHandler(void) {
     sighandler_t oldHandler = signal(SIGALRM, signalHandler);
-    LOGW("pid %d childHandler,  old sigalrm handler: %d, new handler: %d, clear alarm %d", getpid(), (long) oldHandler, (long) signalHandler, alarm(0));
+    LOGW("pid %d childHandler,  old sigalrm handler: %d, new handler: %d, clear alarm %ds", getpid(), (long) oldHandler, (long) signalHandler, alarm(0));
 }
 
 /**
@@ -32,7 +32,7 @@ void childHandler(void) {
  */
 void hookSignalAlarm() {
     sighandler_t oldHandler = signal(SIGALRM, signalHandler);
-    LOGW("pid %d before hook , old sigalrm handler: %d, new handler: %d, clear alarm %d", getpid(), (long) oldHandler, (long) signalHandler, alarm(0));
+    LOGW("pid %d before hook , old sigalrm handler: %d, new handler: %d, clear alarm %ds", getpid(), (long) oldHandler, (long) signalHandler, alarm(0));
     pthread_atfork(prepareHandler, parentHandler, childHandler);
 }
 
