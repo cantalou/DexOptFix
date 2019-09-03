@@ -22,7 +22,7 @@ android {
     dexOptions {
         preDexLibraries = false
         jumboMode = false
-        additionalParameters "--set-max-idx-number=50000", "--minimal-main-dex"
+        additionalParameters "--set-max-idx-number=40000", "--minimal-main-dex"
     }
 }
 

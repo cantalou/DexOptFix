@@ -1,0 +1,213 @@
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.bintray'
+
+file("${rootProject.projectDir}/local.properties").eachLine { String line ->
+    if (line.contains("=")) {
+        def keyValue = line.split("=")
+        project.ext.set(keyValue[0], keyValue[1])
+    }
+}
+
+
+if (project.gradle.startParameter.taskNames.contains("bintray")) {
+    String oldVersion = getProperty("PROJ_VERSION")
+    int index = oldVersion.lastIndexOf(".")
+    def version
+    if (index == -1) {
+        version = Integer.toString(Integer.parseInt(oldVersion.substring(0)) + 1)
+    } else {
+        version = oldVersion.substring(0, index + 1) + Integer.toString(Integer.parseInt(oldVersion.substring(index + 1)) + 1)
+    }
+    println "update version from ${oldVersion} to ${version} "
+}
+
+afterEvaluate {
+    def task = tasks.findByName("bintrayUpload")
+    if (task != null) {
+        task.dependsOn tasks.findByName("assembleRelease")
+        task.doLast {
+            String oldVersion = getProperty("PROJ_VERSION")
+            def version
+            int index = oldVersion.lastIndexOf(".")
+            if (index == -1) {
+                version = Integer.toString(Integer.parseInt(oldVersion) + 1)
+            } else {
+                version = oldVersion.substring(0, index + 1) + Integer.toString(Integer.parseInt(oldVersion.substring(index + 1)) + 1)
+            }
+            println "upload success write new version ${version} to file"
+            def propertiesFile = file("${projectDir}/gradle.properties")
+            def newContent = propertiesFile.getText("UTF-8").replace(oldVersion, version)
+            propertiesFile.withWriter { out ->
+                out << newContent
+            }
+        }
+    }
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    doFirst {
+        source = android.sourceSets.main.java.srcDirs
+        classpath += configurations.compile
+        classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+        android.libraryVariants.all { variant ->
+            variant.javaCompile.classpath.files.each {
+                classpath += project.files(it)
+            }
+        }
+    }
+    failOnError false
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+javadoc {
+    options {
+        encoding "UTF-8"
+        charSet 'UTF-8'
+        author true
+        version true
+        links "http://docs.oracle.com/javase/7/docs/api"
+        title getProperty("PROJ_ARTIFACTID")
+    }
+}
+
+def pomConfig = {
+    licenses {
+        license {
+            name "The Apache Software License, Version 2.0"
+            url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+        }
+    }
+    developers {
+        developer {
+            id getProperty("DEVELOPER_ID")
+            name getProperty("DEVELOPER_NAME")
+            email getProperty("DEVELOPER_EMAIL") DEVELOPER_EMAIL
+        }
+    }
+}
+
+publishing {
+    publications {
+        aarPublication(MavenPublication) {
+
+            groupId getProperty("PROJ_GROUP")
+            artifactId getProperty("PROJ_ARTIFACTID")
+            version getProperty("PROJ_VERSION")
+
+            println "groupId $groupId"
+            println "artifactId $artifactId"
+            println "version $version"
+
+            artifact sourcesJar
+            artifact javadocJar
+            artifact "${project.buildDir}/outputs/aar/${project.name}-release.aar"
+
+            pom.withXml {
+                def root = asNode()
+                def dependenciesNode = root.appendNode('dependencies')
+                configurations.each { configuration ->
+                    configuration.allDependencies.findAll { it.name != 'unspecified' && it.name != null }.each {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+
+                        if (it.excludeRules.size() > 0) {
+                            def exclusionsNode = dependencyNode.appendNode('exclusions')
+                            it.excludeRules.each { rule ->
+                                def exclusionNode = exclusionsNode.appendNode('exclusion')
+                                exclusionNode.appendNode('groupId', rule.group)
+                                exclusionNode.appendNode('artifactId', rule.module)
+                            }
+                        }
+                    }
+                }
+                root.appendNode('description', getProperty("PROJ_DESCRIPTION"))
+                root.children().last() + pomConfig
+            }
+        }
+
+        jarPublication(MavenPublication) {
+
+            groupId getProperty("PROJ_GROUP")
+            artifactId getProperty("PROJ_ARTIFACTID")
+            version getProperty("PROJ_VERSION")
+
+            artifact sourcesJar
+            artifact javadocJar
+            artifact "${project.buildDir}/intermediates/packaged-classes/release/classes.jar"
+
+            pom.withXml {
+                def root = asNode()
+                def dependenciesNode = root.appendNode('dependencies')
+                configurations.each { configuration ->
+                    configuration.allDependencies.findAll { it.name != 'unspecified' && it.name != null }.each {
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+
+                        if (it.excludeRules.size() > 0) {
+                            def exclusionsNode = dependencyNode.appendNode('exclusions')
+                            it.excludeRules.each { rule ->
+                                def exclusionNode = exclusionsNode.appendNode('exclusion')
+                                exclusionNode.appendNode('groupId', rule.group)
+                                exclusionNode.appendNode('artifactId', rule.module)
+                            }
+                        }
+                    }
+                }
+                root.appendNode('description', PROJ_DESCRIPTION)
+                root.children().last() + pomConfig
+            }
+        }
+    }
+}
+
+bintray {
+    user = getProperty("BINTRAY_USER")
+    key = getProperty("BINTRAY_KEY")
+
+    def publicType = "aar"
+
+    if (project.hasProperty("publicType")) {
+        publicType = getProperty("publicType")
+    }
+
+    if (publicType == "all") {
+        publications = ['aarPublication', 'jarPublication']
+    } else if (publicType == "aar") {
+        publications = ['aarPublication']
+    } else if (publicType == "jar") {
+        publications = ['jarPublication']
+    } else {
+        publications = ['aarPublication']
+    }
+
+    publish = true //[Default: false] Whether version should be auto published after an upload
+    pkg {
+        repo = 'maven'
+        userOrg = user
+        name = getProperty("PROJ_NAME")
+        desc = getProperty("PROJ_DESCRIPTION")
+        websiteUrl = getProperty("PROJ_WEBSITEURL")
+        issueTrackerUrl = getProperty("PROJ_ISSUETRACKERURL")
+        vcsUrl = getProperty("PROJ_VCSURL")
+        licenses = ['Apache-2.0']
+        publicDownloadNumbers = true
+        publish = true
+        version {
+            name = getProperty("PROJ_VERSION")
+            vcsTag = getProperty("PROJ_VERSION")
+        }
+    }
+}

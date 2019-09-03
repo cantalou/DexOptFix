@@ -2,6 +2,7 @@ package com.cantalou.dexoptfix
 
 import android.app.Application
 import android.content.Context
+import android.support.multidex.MultiDex
 
 /**
  *
@@ -14,6 +15,7 @@ class DexOptFixApplication : Application() {
 
     override fun attachBaseContext(base: Context?) {
         super.attachBaseContext(base)
-        System.loadLibrary("dexoptfix")
+        DexOptFix.fix(this)
+        MultiDex.install(this)
     }
 }
